@@ -1,0 +1,29 @@
+{
+  "family": "aws-container-task",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "512",
+  "memory": "1024",
+  "executionRoleArn": "arn:aws:iam::<ACCOUNT_ID>:role/ecsTaskExecutionRole",
+  "taskRoleArn": "arn:aws:iam::<ACCOUNT_ID>:role/ecsTaskRole",
+  "containerDefinitions": [
+    {
+      "name": "aws-container-web",
+      "image": "<ACCOUNT_ID>.dkr.ecr.us-east-2.amazonaws.com/aws-container:latest",
+      "essential": true,
+      "portMappings": [{ "containerPort": 5000, "protocol": "tcp" }],
+      "environment": [
+        { "name": "DATABASE_URL", "value": "postgresql://<DB_USER>:<DB_PASSWORD_URL_ENCODED>@<RDS_ENDPOINT>:5432/customers" },
+        { "name": "SECRET_KEY", "value": "<LONG_RANDOM_SECRET>" }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/aws-container-task",
+          "awslogs-region": "us-east-2",
+          "awslogs-stream-prefix": "web"
+        }
+      }
+    }
+  ]
+}

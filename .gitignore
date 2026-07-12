@@ -1,0 +1,89 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+*.log
+
+# AWS deployment artifacts
+aws-container.zip
+
+# Real ECS task definition — contains the RDS password & SECRET_KEY in plaintext.
+# CI regenerates it from AWS at deploy time (see .github/workflows/deploy.yml),
+# so it never needs to live in the repo. Commit task-definition.example.json instead.
+task-definition.json
+
+# Temporary files
+*.tmp
+*.temp
+
+# CSV data files (if they contain sensitive data)
+*.csv
+!sample_customers.csv
+
+# Specific to your project
+.abacus.donotdelete
+
+# Jupyter Notebooks
+.ipynb_checkpoints/
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Logs
+logs/
+*.log
+
+# Flask specific
+instance/
+.webassets-cache
+
+# MyPy
+.mypy_cache/
+.dmypy.json
+dmypy.
+
+
+task-definition.json

@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Customer Hours Uploader</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card: #1e293b;
+      --accent: #6366f1;
+      --accent-2: #8b5cf6;
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+      --ok: #22c55e;
+      --err: #ef4444;
+      --warn: #f59e0b;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 40px 16px;
+    }
+    .container { width: 100%; max-width: 720px; }
+    header { text-align: center; margin-bottom: 32px; }
+    header h1 { font-size: 2rem; font-weight: 700; }
+    header h1 span {
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    header p { color: var(--muted); margin-top: 8px; }
+    .card {
+      background: var(--card);
+      border-radius: 16px;
+      padding: 28px;
+      box-shadow: 0 20px 50px rgba(0,0,0,.4);
+      border: 1px solid rgba(148,163,184,.1);
+    }
+    .dropzone {
+      border: 2px dashed rgba(148,163,184,.4);
+      border-radius: 14px;
+      padding: 44px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: all .2s ease;
+      background: rgba(99,102,241,.04);
+    }
+    .dropzone.dragover {
+      border-color: var(--accent);
+      background: rgba(99,102,241,.15);
+      transform: scale(1.01);
+    }
+    .dropzone .icon { font-size: 3rem; }
+    .dropzone h3 { margin: 12px 0 4px; }
+    .dropzone p { color: var(--muted); font-size: .9rem; }
+    .file-name {
+      margin-top: 16px; font-size: .95rem; color: var(--accent-2); font-weight: 600;
+      min-height: 20px;
+    }
+    input[type=file] { display: none; }
+    .btn {
+      display: inline-block; margin-top: 20px; width: 100%;
+      padding: 14px; border: none; border-radius: 10px; cursor: pointer;
+      font-size: 1rem; font-weight: 600; color: #fff;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      transition: opacity .2s;
+    }
+    .btn:hover { opacity: .9; }
+    .btn:disabled { opacity: .4; cursor: not-allowed; }
+    .links { display: flex; gap: 12px; margin-top: 20px; }
+    .links a {
+      flex: 1; text-align: center; padding: 12px; border-radius: 10px;
+      text-decoration: none; color: var(--text); font-weight: 600;
+      border: 1px solid rgba(148,163,184,.25); transition: background .2s;
+    }
+    .links a:hover { background: rgba(148,163,184,.1); }
+    .flash { padding: 12px 16px; border-radius: 10px; margin-bottom: 16px; font-weight: 500; }
+    .flash.error { background: rgba(239,68,68,.15); color: #fecaca; border: 1px solid var(--err); }
+    .summary { margin-top: 24px; }
+    .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    .stat {
+      background: rgba(15,23,42,.6); border-radius: 12px; padding: 18px; text-align: center;
+      border: 1px solid rgba(148,163,184,.1);
+    }
+    .stat .num { font-size: 1.8rem; font-weight: 700; }
+    .stat .num.ins { color: var(--ok); }
+    .stat .num.upd { color: var(--accent-2); }
+    .stat .num.skip { color: var(--warn); }
+    .stat .lbl { color: var(--muted); font-size: .8rem; margin-top: 4px; text-transform: uppercase; letter-spacing: .05em; }
+    .errors { margin-top: 16px; background: rgba(239,68,68,.08); border: 1px solid rgba(239,68,68,.3); border-radius: 10px; padding: 14px; }
+    .errors h4 { color: #fecaca; margin-bottom: 8px; }
+    .errors ul { margin-left: 18px; color: #fca5a5; font-size: .88rem; }
+    .hint { margin-top: 22px; font-size: .85rem; color: var(--muted); text-align: center; }
+    code { background: rgba(148,163,184,.15); padding: 2px 6px; border-radius: 5px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Customer <span>Hours</span> Uploader</h1>
+      <p>Upload a CSV of customer IDs and hours worked. Existing customers get cumulative hours — no duplicates.</p>
+    </header>
+
+    <div class="card">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <div class="flash {{ category }}">{{ message }}</div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+
+      <form id="uploadForm" action="{{ url_for('upload') }}" method="post" enctype="multipart/form-data">
+        <label class="dropzone" id="dropzone" for="fileInput">
+          <div class="icon">📤</div>
+          <h3>Drag &amp; drop your CSV here</h3>
+          <p>or click to browse — <code>Customer ID, Hours Worked</code></p>
+          <div class="file-name" id="fileName"></div>
+          <input type="file" id="fileInput" name="file" accept=".csv" />
+        </label>
+        <button type="submit" class="btn" id="submitBtn" disabled>Upload &amp; Process</button>
+      </form>
+
+      <div class="links">
+        <a href="{{ url_for('view_data') }}">📊 View All Data</a>
+        <a href="{{ url_for('health') }}">💚 Health Check</a>
+      </div>
+
+      {% if summary %}
+        <div class="summary">
+          <div class="stats">
+            <div class="stat"><div class="num ins">{{ summary.inserted }}</div><div class="lbl">Inserted</div></div>
+            <div class="stat"><div class="num upd">{{ summary.updated }}</div><div class="lbl">Updated</div></div>
+            <div class="stat"><div class="num skip">{{ summary.skipped }}</div><div class="lbl">Skipped</div></div>
+          </div>
+          {% if summary.errors %}
+            <div class="errors">
+              <h4>⚠️ {{ summary.errors|length }} row(s) had issues</h4>
+              <ul>
+                {% for e in summary.errors %}<li>{{ e }}</li>{% endfor %}
+              </ul>
+            </div>
+          {% endif %}
+        </div>
+      {% endif %}
+
+      <p class="hint">Tip: try the included <code>sample_customers.csv</code> (10 records).</p>
+    </div>
+  </div>
+
+  <script>
+    const dropzone = document.getElementById('dropzone');
+    const fileInput = document.getElementById('fileInput');
+    const fileName = document.getElementById('fileName');
+    const submitBtn = document.getElementById('submitBtn');
+
+    function setFile(file) {
+      if (!file) return;
+      if (!file.name.toLowerCase().endsWith('.csv')) {
+        fileName.textContent = '❌ Please choose a .csv file';
+        submitBtn.disabled = true;
+        return;
+      }
+      fileName.textContent = '✅ ' + file.name;
+      submitBtn.disabled = false;
+    }
+
+    fileInput.addEventListener('change', () => setFile(fileInput.files[0]));
+
+    ['dragenter', 'dragover'].forEach(evt =>
+      dropzone.addEventListener(evt, e => { e.preventDefault(); dropzone.classList.add('dragover'); })
+    );
+    ['dragleave', 'drop'].forEach(evt =>
+      dropzone.addEventListener(evt, e => { e.preventDefault(); dropzone.classList.remove('dragover'); })
+    );
+    dropzone.addEventListener('drop', e => {
+      const file = e.dataTransfer.files[0];
+      fileInput.files = e.dataTransfer.files;
+      setFile(file);
+    });
+  </script>
+</body>
+</html>

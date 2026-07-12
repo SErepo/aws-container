@@ -1,0 +1,56 @@
+# docker-compose.yml
+# Local development stack: Flask web app + PostgreSQL database.
+# Everything a newcomer needs to run the project on Windows/Mac/Linux with a
+# single command:  docker compose up --build
+#
+# The Postgres data lives in a named volume so your rows survive container
+# restarts. Delete it with:  docker compose down -v
+
+services:
+  # ----------------------------------------------------------------------- #
+  # PostgreSQL database
+  # ----------------------------------------------------------------------- #
+  db:
+    image: postgres:16-alpine
+    container_name: aws_container_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-appuser}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-apppassword}
+      POSTGRES_DB: ${POSTGRES_DB:-customers}
+    ports:
+      # Expose 5432 locally so you can inspect the DB with a GUI client if you like.
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-appuser} -d ${POSTGRES_DB:-customers}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # ----------------------------------------------------------------------- #
+  # Flask web application
+  # ----------------------------------------------------------------------- #
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: aws_container_web
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-appuser}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-apppassword}
+      POSTGRES_DB: ${POSTGRES_DB:-customers}
+      POSTGRES_HOST: db
+      POSTGRES_PORT: "5432"
+      SECRET_KEY: ${SECRET_KEY:-dev-only-change-me}
+    ports:
+      - "5000:5000"
+
+volumes:
+  pgdata:
+    driver: local

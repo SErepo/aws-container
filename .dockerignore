@@ -1,0 +1,25 @@
+# Keep the Docker build context small and avoid leaking secrets into images.
+.git
+.gitignore
+.github
+*.md
+AWS_DEPLOYMENT.md
+TEARDOWN.md
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.env
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Local data
+*.sqlite3
+*.db
